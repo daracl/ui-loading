@@ -1,7 +1,12 @@
-const instanceMap = {};
-const centerLoadingIntervalObject = {};
+import { LoadingOptions } from "@t/LoadingOptions";
 
-let defaultOptions = {
+
+
+const instanceMap: Record<string, Loading> = {};
+const centerLoadingIntervalObject: Record<string, number> = {};
+declare const APP_VERSION: string
+
+let defaultOptions:Required<LoadingOptions> = {
   //  사라지는 시간
   timeout: -1,
 
@@ -30,49 +35,48 @@ let defaultOptions = {
 };
 
 /**
- * Loading message 모듈
+ * Loading 모듈
  */
+
 export default class Loading {
-  static VERSION = APP_VERSION;
-  constructor(selector, options) {
+  public static VERSION = `${APP_VERSION}`
+
+  private selector: string;
+  private containerNode: HTMLElement | null;
+  private options: Required<LoadingOptions>;
+  private orginStylePosition = "";
+
+  constructor(selector: string | HTMLElement | null | undefined, options : LoadingOptions = {}) {
     if (selector instanceof HTMLElement) {
       this.containerNode = selector;
+      this.selector = "";
     } else {
+      selector = selector || "body";
       this.containerNode = document.querySelector(selector);
+      this.selector = selector;
     }
 
-    if (this.containerNode == null) {
-      //throw new Error(`selector not valid : ${selector}`);
-      return;
-    }
+    if (!this.containerNode) return;
 
-    this.selector = selector;
     this.options = Object.assign({}, defaultOptions, options);
-
-    instanceMap[selector] = this;
+    instanceMap[this.selector] = this;
 
     this.show();
   }
 
-  static create(selector, options) {
+  public static create(selector: string | HTMLElement | null | undefined, options?: LoadingOptions) {
     return new Loading(selector, options);
   }
 
-  /**
-   * default options 셋팅
-   *
-   * @static
-   * @typedef {Object} defaultOptions
-   */
-  static setOptions(options) {
+  public static instance(selector: string) {
+    return instanceMap[selector];
+  }
+
+  public static setOptions(options: LoadingOptions) {
     defaultOptions = Object.assign({}, defaultOptions, options);
   }
 
-  static instance = (selector) => {
-    return instanceMap[selector];
-  };
-
-  cancelHandler() {
+  private cancelHandler() {
     const callback = this.options.callback;
     if (callback) {
       if (callback(this.options) !== false) {
@@ -83,115 +87,128 @@ export default class Loading {
     }
   }
 
+  
   /**
-   * 보이기
-   *
+   * show loading module
    * @public
-   */
-  show = () => {
+   */ 
+  public show (){
     const containerNode = this.containerNode;
+    if (!containerNode) return;
 
-    if (containerNode === null || containerNode === undefined) return;
-
-    if (containerNode.querySelector(".daracl-cl") != null) return;
+    if (containerNode.querySelector(".daracl-cl")) return;
 
     this.orginStylePosition = containerNode.style.position;
     const computedStyle = getComputedStyle(containerNode);
 
-    const containerPosition = computedStyle.position;
-
-    if (["absolute", "relative", "fixed", "sticky"].indexOf(containerPosition) < 0) {
+    if (!["absolute", "relative", "fixed", "sticky"].includes(computedStyle.position)) {
       containerNode.style.position = "relative";
     }
 
     const opts = this.options;
 
     let template = `
-			<div class="daracl-cl" style="cursor: ${opts.cursor}; top: 0px; left: 0px; z-index: ${opts.zIndex}; position: absolute; width: 100%; height: 100% ">
-				<div style="position: absolute; background: ${opts.bgColor}; opacity: ${opts.opacity}; width: 100%; height: 100%; z-index: 1"></div>
-        <div style="z-index: 10; textAlign: center; margin: 0; position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%)">
-         ${opts.enableTime ? `<div class="daracl-cl-time" style="position: absolute;z-index: ${opts.zIndex + 1};text-align: center;width: 100%;margin-top: 8px;">0</div>` : ""}
-        <img class="daracl-cl-image" src=${opts.loadingImg} />
-		`;
-    if (opts.content !== null && opts.content !== undefined && opts.content !== "") {
-      template += ` <div class="daracl-cl-content">${opts.content}</div>`;
+      <div class="daracl-cl" style="cursor: ${opts.cursor}; top: 0px; left: 0px; z-index: ${opts.zIndex}; position: absolute; width: 100%; height: 100%;">
+        <div style="position: absolute; background: ${opts.bgColor}; opacity: ${opts.opacity}; width: 100%; height: 100%; z-index: 1"></div>
+        <div style="z-index: 10; text-align: center; margin: 0; position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%)">
+          ${
+            opts.enableTime
+              ? `<div class="daracl-cl-time" style="position: absolute; z-index: ${opts.zIndex + 1}; width: 100%; margin-top: 8px;">0</div>`
+              : ""
+          }
+          <img class="daracl-cl-image" src="${opts.loadingImg}" />
+    `;
+
+    if (opts.content) {
+      template += `<div class="daracl-cl-content">${opts.content}</div>`;
     }
 
     if (opts.enableCancelButton) {
-      template += `<div style="height: 35px;line-height: 35px;"><button type="button" class="daracl-cl-btn">Cancel</button></div>`;
+      template += `<div style="height: 35px; line-height: 35px;"><button type="button" class="daracl-cl-btn">Cancel</button></div>`;
     }
-    template += `</div>`;
 
-    template += "</div>";
+    template += `</div></div>`;
 
     containerNode.insertAdjacentHTML("afterbegin", template);
 
     if (opts.enableCancelButton) {
-      containerNode.querySelector(".daracl-cl-btn")?.addEventListener("click", () => {
-        this.cancelHandler();
-      });
+      containerNode
+        .querySelector(".daracl-cl-btn")
+        ?.addEventListener("click", () => this.cancelHandler());
     }
 
-    if (opts.enableTime === true) {
-      const loadingTimeElement = containerNode.querySelector(".daracl-cl-time");
+    if (opts.enableTime) {
+      const loadingTimeElement = containerNode.querySelector(".daracl-cl-time") as HTMLElement;
       let sec = 0;
-      centerLoadingIntervalObject[this] = setInterval(() => {
-        loadingTimeElement.innerText = ++sec;
+      centerLoadingIntervalObject[this.selector] = window.setInterval(() => {
+        loadingTimeElement.innerText = `${++sec}`;
       }, 1000);
     }
 
-    if (this.options.timeout > 0) {
-      setTimeout(() => {
-        this.hide();
-      }, this.options.timeout);
+    if (opts.timeout > 0) {
+      setTimeout(() => this.hide(), opts.timeout);
     }
   };
 
+  
   /**
-   * content change
+   * set display content
    *
-   * @param {String} content
+   * @public
+   * @param {string} content 
    */
-  setContent = (content) => {
-    if (this.containerNode.querySelector(".daracl-cl-content") == null) {
-      this.containerNode.querySelector(".daracl-cl-image").insertAdjacentHTML("afterend", `<div class="daracl-cl-content">${content}</div>`);
+  public setContent (content: string){
+    if (!this.containerNode) return;
+
+    const existing = this.containerNode.querySelector(".daracl-cl-content");
+    if (!existing) {
+      this.containerNode
+        .querySelector(".daracl-cl-image")
+        ?.insertAdjacentHTML("afterend", `<div class="daracl-cl-content">${content}</div>`);
     } else {
-      this.containerNode.querySelector(".daracl-cl-content").innerHTML = content;
+      existing.innerHTML = content;
     }
   };
 
+  
   /**
-   * 감추기
+   * hide loading module
+   *
+   * @public
+   * @param {?boolean} [flag] 
    */
-  hide = (flag) => {
-    if (this.containerNode != null) {
-      if (this.orginStylePosition == "") {
-        this.containerNode.style.position = "";
-      } else {
-        this.containerNode.style.position = this.orginStylePosition;
-      }
+  public hide (flag?: boolean){
+    if (this.containerNode) {
+      this.containerNode.style.position = this.orginStylePosition || "";
 
       const loadingEle = this.containerNode.querySelector(".daracl-cl");
-
-      if (loadingEle != null) {
+      if (loadingEle) {
         this.containerNode.removeChild(loadingEle);
       }
 
       if (this.options.enableTime) {
-        clearInterval(centerLoadingIntervalObject[this]);
-        delete centerLoadingIntervalObject[this];
+        clearInterval(centerLoadingIntervalObject[this.selector]);
+        delete centerLoadingIntervalObject[this.selector];
       }
     }
+
     if (flag !== false) {
       delete instanceMap[this.selector];
     }
   };
 
-  static destroy = (selector) => {
-    if (Object.prototype.hasOwnProperty.call(instanceMap, selector)) {
+  
+  /**
+   * destroy loading instance
+   *
+   * @public
+   * @static
+   * @param {string} selector 
+   */
+  public static destroy(selector: string) {
+    if (instanceMap[selector]) {
       instanceMap[selector].hide(false);
-
       delete instanceMap[selector];
     }
-  };
+  }
 }

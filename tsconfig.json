@@ -1,22 +1,34 @@
 {
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist", "build", ".vscode"],
   "compilerOptions": {
-    // 일반적으로 소스 파일로 무시되기 때문에,
-    // TypeScript가 JS 파일을 읽도록 지시합니다.
-    "allowJs": true,
-    // d.ts 파일을 생성시킵니다.
-    "declaration": true,
-    // 컴파일러 실행이 오직
-    // d.ts 파일만 출력하게 합니다.
-    "emitDeclarationOnly": true,
-    // 타입은 이 디렉터리 안에 존재해야 합니다.
-    // 해당 설정을 제거하면,
-    // .d.ts 파일이 .js 파일 옆에 생성됩니다.
-    "outDir": "dist",
+    /* Emit */
+    "target": "ESNext",                  /* 최신 브라우저 타겟 (vite/esbuild가 다운트랜스파일링함). */
+    "module": "ESNext",                  /* Rollup/Vite 환경에 맞게 ESM 사용. */
+    "declaration": true,                 /* .d.ts 파일 생성 */
+    "outDir": "./dist",                  /* 타입 선언만 dist로 출력 */
+    "sourceMap": true,                   /* 소스맵 생성 */
+
+    /* Module resolution */
+    "moduleResolution": "Node",
+    "baseUrl": ".",
+    "paths": {
+      "@t/*": ["src/types/*"],
+      "src/*": ["src/*"]
+    },
+
+    /* Interop & helpers */
+    "importHelpers": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+
+    /* Strictness */
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+
+    /* Libs */
+    "lib": ["DOM", "DOM.Iterable", "ESNext"]
   }
 }
