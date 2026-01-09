@@ -3,6 +3,7 @@ import path from 'path';
 import banner from 'vite-plugin-banner';
 import packageJson from './package.json';
 import terser from '@rollup/plugin-terser';
+import { visualizer } from "rollup-plugin-visualizer";
 
 const topBanner = `/*!
 * ${packageJson.name}  v${packageJson.version}
@@ -26,10 +27,11 @@ export default defineConfig(({ mode }) => {
       outDir: isProd ? 'dist' : 'dist/unmin',
       emptyOutDir: true,
       sourcemap: true,
-      minify: isProd ? 'terser' : false,
+      minify: isProd ? 'esbuild' : false,
       lib: {
         entry: path.resolve(__dirname, 'src/index.ts'),
         name: 'Daracl.loading',
+        //formats: ['es', 'cjs', 'umd'],
         formats: ['es', 'cjs', 'umd'],
         fileName: (format) => {
           if (format === 'umd') {
@@ -49,6 +51,11 @@ export default defineConfig(({ mode }) => {
         },
       },
       rollupOptions: {
+        treeshake: {
+           moduleSideEffects: false,
+          propertyReadSideEffects: false,
+          tryCatchDeoptimization: false
+        },
        // plugins: isProd ? [terser()] : [], 
         output: {
           assetFileNames: (assetInfo) => {
@@ -58,6 +65,14 @@ export default defineConfig(({ mode }) => {
             return 'assets/[name].[ext]';
           },
         },
+        plugins: [
+          visualizer({
+            filename: "bundle-report.html",
+            open: true,      // 자동으로 브라우저에서 보고서 열기
+            gzipSize: true,
+            brotliSize: true
+          })
+        ]
       },
     },
     plugins: [banner(topBanner)],

@@ -1,7 +1,7 @@
 /**
  * Loading message 모듈
  */
-export class Loading {
+export class Loading111 {
   constructor(selector, options: any);
 
   /**

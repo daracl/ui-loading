@@ -1,8 +1,8 @@
 import { LoadingOptions } from "@t/LoadingOptions";
+import {Ajax, isBlank} from '@daracl/core';
 
 
 
-const instanceMap: Record<string, Loading> = {};
 const centerLoadingIntervalObject: Record<string, number> = {};
 declare const APP_VERSION: string
 
@@ -38,7 +38,7 @@ let defaultOptions:Required<LoadingOptions> = {
  * Loading 모듈
  */
 
-export default class Loading {
+export class Loading111 {
   public static VERSION = `${APP_VERSION}`
 
   private selector: string;
@@ -47,6 +47,15 @@ export default class Loading {
   private orginStylePosition = "";
 
   constructor(selector: string | HTMLElement | null | undefined, options : LoadingOptions = {}) {
+
+    if(isBlank(selector)){
+      selector = "body";
+    }
+
+    
+    const ajax = new Ajax({});
+        
+
     if (selector instanceof HTMLElement) {
       this.containerNode = selector;
       this.selector = "";
@@ -59,17 +68,8 @@ export default class Loading {
     if (!this.containerNode) return;
 
     this.options = Object.assign({}, defaultOptions, options);
-    instanceMap[this.selector] = this;
 
     this.show();
-  }
-
-  public static create(selector: string | HTMLElement | null | undefined, options?: LoadingOptions) {
-    return new Loading(selector, options);
-  }
-
-  public static instance(selector: string) {
-    return instanceMap[selector];
   }
 
   public static setOptions(options: LoadingOptions) {
@@ -178,23 +178,7 @@ export default class Loading {
    * @param {?boolean} [flag] 
    */
   public hide (flag?: boolean){
-    if (this.containerNode) {
-      this.containerNode.style.position = this.orginStylePosition || "";
-
-      const loadingEle = this.containerNode.querySelector(".daracl-cl");
-      if (loadingEle) {
-        this.containerNode.removeChild(loadingEle);
-      }
-
-      if (this.options.enableTime) {
-        clearInterval(centerLoadingIntervalObject[this.selector]);
-        delete centerLoadingIntervalObject[this.selector];
-      }
-    }
-
-    if (flag !== false) {
-      delete instanceMap[this.selector];
-    }
+    
   };
 
   
@@ -206,9 +190,6 @@ export default class Loading {
    * @param {string} selector 
    */
   public static destroy(selector: string) {
-    if (instanceMap[selector]) {
-      instanceMap[selector].hide(false);
-      delete instanceMap[selector];
-    }
+    
   }
 }
