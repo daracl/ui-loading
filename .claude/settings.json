@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run test)",
+      "Bash(npm run build)",
+      "Bash(npm run build:tsc)",
+      "Bash(npm test)",
+      "Bash(node ../ui-common-harness/scripts/*)"
+    ],
+    "deny": [
+      "Edit(dist/**)",
+      "Bash(npm publish*)",
+      "Bash(yarn publish*)",
+      "Bash(pnpm publish*)",
+      "Bash(git push*)"
+    ]
+  }
+}
